@@ -181,9 +181,27 @@ Via Dashboard : Settings → Edge Functions → Manage Secrets → `ANTHROPIC_AP
 
 ## Étape 1.10 — Déployer les Edge Functions
 
+### Option A — Via MCP Supabase (prioritaire)
+
+**Toujours tenter le MCP d'abord.** Le CLI Supabase n'est qu'un fallback.
+
+1. Lister les dossiers dans `supabase/functions/` pour identifier toutes les Edge Functions à déployer
+2. Pour chaque function, lire le fichier `index.ts` (et les fichiers partagés s'il y en a dans `supabase/functions/shared/` ou `supabase/functions/_shared/`)
+3. Déployer chaque function via `Supabase:deploy_edge_function` avec le `project_id` et le code lu
+
+```
+Pour chaque dossier dans supabase/functions/ (sauf shared/_shared) :
+  → Lire supabase/functions/[nom]/index.ts
+  → Supabase:deploy_edge_function(project_id, name=[nom], code=[contenu du fichier])
+```
+
+**Si une function importe du code partagé** (ex : `import { aiCaller } from "../shared/ai-caller.ts"`), inclure le code partagé dans le déploiement ou l'inliner dans la function.
+
+### Option B — Via Supabase CLI (fallback si le MCP ne peut pas déployer les functions)
+
 ```bash
 npm install -g supabase  # si pas installé
-supabase login
+supabase login           # ouvre le navigateur pour se connecter
 supabase link --project-ref [PROJECT_ID]
 supabase functions deploy --no-verify-jwt
 ```
@@ -192,12 +210,13 @@ supabase functions deploy --no-verify-jwt
 
 | Erreur | Diagnostic | Correction |
 |---|---|---|
-| `Cannot find project` | Project-ref incorrect | Dashboard → Settings → General |
-| `Access token not provided` | Login manquant | `supabase login` |
-| `Failed to deploy` | Erreur dans le code | Identifier la function, lire l'erreur |
+| MCP `deploy_edge_function` échoue | Peut être un problème de format | Basculer sur le CLI (option B) |
+| CLI `Cannot find project` | Project-ref incorrect | Dashboard → Settings → General |
+| CLI `Access token not provided` | Login manquant | `supabase login` |
+| CLI `Failed to deploy` | Erreur dans le code | Identifier quelle function, lire l'erreur |
 | `functions/ not found` | Dossier absent ou mal nommé | Vérifier structure repo (étape 1.2) |
 
-**Vérification :** `Supabase:list_edge_functions` ou Dashboard → Edge Functions.
+**Vérification :** `Supabase:list_edge_functions` → vérifier que toutes les functions sont listées.
 
 ---
 
